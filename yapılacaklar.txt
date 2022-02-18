@@ -1,0 +1,49 @@
+-- 2 Deployment/service file oluşturulacak
+    + biri web server için(CREATE/DELETE/UPDATE)
+        -> Dockerfile
+        -> deployment (kube.)
+            -> container port = 80
+            -> şifreler için kube. secret
+            -> db host bilgileri ConfigMap'te tutulacak
+        -> service dosyaları (kube.)
+            -> web server Deployment'a attach edilecek
+            -> NodePort servisi kullanılacak port = 30001
+            -> expose ve target port = 80
+
+    + diğeri result server için(SEARCH)
+        -> Dockerfile
+        -> deployment (kube.)
+            -> container port = 80
+            -> şifreler için kube. secret
+            -> db host bilgileri ConfigMap'te tutulacak
+        -> service dosyaları (kube.)
+            -> result server Deployment'a attach edilecek
+            -> NodePort servisi kullanılacak port = 30002
+            -> expose ve target port = 80
+
+-- Database için Deployment/service file oluşturulacak
+    + Deployment
+        -> mysql:5.7 image
+        -> container port = 3306
+        -> PV bu deployment'a atanacak
+        -> passw. kube. secretta tutulacak
+    + Service
+        -> Database deployment'a atanacak
+        -> ClusterIp servisi kullanılacak
+        -> expose ve target portu = 3306
+
+-- Persistent Volume
+    -> capasity = 20Gi.
+    -> ReadWriteOnce
+    -> host path = /mnt/data
+    -> atayabilmek için PVC tanımlanmış olacak.
+
+
+-- Kubernetes Cluster için;
+    + custom network olacak
+    + 1 worker 1 master Node.
+    + t2.medium
+    + 22 - 80 ve servis portları açılacak
+
+-- requirement.txt için;
+    -> python3 ve flask
