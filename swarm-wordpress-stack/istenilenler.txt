@@ -1,0 +1,3 @@
+- wordpress:latest ve mysql:5.7 imajı olan docker stack compose file ile oluşturulacak 
+- env var. secret ile oluşturulup compose'ta tanımlanacak
+- mysql şifresini secret ile belirle

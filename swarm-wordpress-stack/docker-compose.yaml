@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+
+  websrv:             # wordpress
+    image: wordpress:latest
+    deploy:
+      replicas: 2
+      update_config:
+        parallelism: 2
+        delay: 5s
+    ports:
+      - 8080:80
+    depends_on:
+      - mysqldb
+    networks:
+      - overnet
+    environment:
+      WORDPRESS_DB_HOST: mysqldb
+      WORDPRESS_DB_USER: /run/secrets/username
+      WORDPRESS_DB_PASSWORD: /run/secrets/password
+      WORDPRESS_DB_NAME: wordpressdb
+    volumes:
+      - wordpress:/var/www/html
+
+  mysqldb:              # database
+    image: mysql:5.7
+    environment:
+      MYSQL_ROOT_PASSWORD: /run/secrets/password
+      MYSQL_DATABASE: wordpressdb
+      MYSQL_USER: /run/secrets/username
+      MYSQL_PASSWORD: /run/secrets/password
+    networks:
+      - overnet
+    volumes:
+      - db:/var/lib/mysql
+
+secrets:
+  username:
+    file: ./username
+  password:
+    file: ./password
+
+networks:
+  overnet:
+    driver: overlay
+
+volumes:
+  db:
+  wordpress:
+  
