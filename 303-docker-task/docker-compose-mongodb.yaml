@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:latest
+    restart: unless-stopped
+    # ports:
+    # - 27017
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: /run/secrets/password
+    networks:
+      - mongo-nt
+    volumes:
+      - mongo-db:/data/db
+
+secrets:
+  password:
+    file: ./password
+
+networks:
+  mongo-nt:
+    driver: bridge
+
+volumes:
+  mongo-db:

@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  mysqldb:              # mysql database
+      image: mysql:5.7
+      environment:
+        MYSQL_ROOT_PASSWORD: /run/secrets/password
+        # MYSQL_DATABASE: test
+        # MYSQL_USER: /run/secrets/username
+        # MYSQL_PASSWORD: /run/secrets/password
+      networks:
+        - mysql-nt
+      volumes:
+        - db:/var/lib/mysql
+
+secrets:
+  #username:
+  #  file: ./username
+  password:
+    file: ./password
+
+networks:
+  mysql-nt:
+    driver: bridge
+
+volumes:
+  db:
+  
