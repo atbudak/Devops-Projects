@@ -1,0 +1,62 @@
+# treafik ile http yi https e traefik ile yönlendirme
+# https://doc.traefik.io/traefik/user-guides/docker-compose/acme-tls/
+version: '3.8'
+
+services:
+   test.didiyo.traefik:
+    image: traefik:v2.7
+    container_name: test.didiyo.traefik
+    restart: always
+    command:  # test ortamı için debug açılıp --api.insecure=false yapılabilir
+      # - "--log.level=DEBUG"   
+      # - --port=8082  # traefik listens spesific port
+      - "--api.insecure=false"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=true"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
+      - "--certificatesresolvers.myresolver.acme.httpchallenge=true"
+      - "--certificatesresolvers.myresolver.acme.httpchallenge.entrypoint=web"
+      - "--certificatesresolvers.myresolver.acme.email=ahmet.budak@overtech.com.tr"
+      - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
+    ports:  # --api.insecure=true olursa 8080:8080 portu açılarak traefik dashboardı aktif edilir.
+      - 80:80
+      - 443:443
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - letsencrypt:/letsencrypt
+    networks:
+      - didiyo_test_nw
+
+   test.didiyo.seq:
+    image: datalust/seq:2021.2
+    container_name: test.didiyo.seq
+    restart: unless-stopped
+    mem_limit: 1g
+    labels:
+      - traefik.http.routers.web.tls.certresolver=myresolver
+      - traefik.http.routers.web.rule=Host(`testseq.didiyo.com`)
+    volumes:
+       - $PWD/seq/data:/data
+    environment: # seq cache şişirmesin diye sınırlandı
+       - SEQ_CACHE_SYSTEMRAMTARGET=0.7
+       - SEQ_CACHE_COMPACTLARGEOBJECTHEAP=True
+       - ACCEPT_EULA=Y
+    ports:
+       #- "80:80"
+       - "5341:5341"
+    networks:
+       - didiyo_test_nw
+
+networks:
+  didiyo_test_nw:
+
+volumes:
+  letsencrypt:
+    driver: local
+
+
+# AWS Security Rule traefik için 80 ve 443 portu herkese açık olacak
+# Seq için 5341 portu açık olacak (VPC içinde)

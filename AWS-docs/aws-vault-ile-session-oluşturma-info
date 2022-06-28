@@ -1,0 +1,36 @@
+# AWS Konsolu için;
+- IAM de arn:aws:iam::495114409155:role/admin_role şeklinde bir role oluşturulacak localde kullanılmak üzere,
+- Telefona gooogle auth. kurulacak, 
+- IAM->Users->Security Credential->Assigned MFA device(manage) diyerek google auth kısmına code okutarak giriyoruz.
+- çıkan mfa kodu localde profil oluştururken kullanıyoruz.
+
+# gereksinimleri indiriyoruz
+sayfa::aws-vault-ile-session-oluşturma.links
+
+# localde vault işlemleri
+
+aws-vault add didiyo
+
+- access keyleri gireceğiz
+
+# vi ~/aws/config dosyasında
+
+[profile didiyo]
+region=eu-central-1
+mfa_serial=arn:aws:iam::495114409155:mfa/abudak
+source_profile=didiyo
+
+[profile didiyoadmin]
+include_profile=didiyo
+role_arn=arn:aws:iam::495114409155:role/admin_role
+
+
+aws-vault exec -d 12h  didiyoadmin -- cmd.exe
+-> mfa kodu gireceğiz
+
+****Her yeni konsolda session sıfırlanıyor; aws-vault exec didiyoadmin -- cmd.exe
+komutuyla tekrar bağlanmak gerekiyor.
+
+# connect aws eks on cli
+
+aws eks --region region update-kubeconfig --name cluster_name

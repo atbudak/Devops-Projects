@@ -1,0 +1,9 @@
+# https://chocolatey.org/install
+# chocolatey ile aws cli indiriyoruz -- Windows
+Set-ExecutionPolicy Bypass -Scope Process -Force; `iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
+
+# vault indiriyoruz
+choco install aws-vault
+
+# kubectl kurulumu
+curl -o kubectl.exe https://s3.us-west-2.amazonaws.com/amazon-eks/1.22.6/2022-03-09/bin/windows/amd64/kubectl.exe
