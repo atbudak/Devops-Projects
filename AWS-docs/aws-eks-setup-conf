@@ -1,0 +1,149 @@
+EKS Kurulumu:
+
+    Part 1 - Creating the Kubernetes Cluster on EKS
+    Part 2 - Creating a kubeconfig file
+    Part 3 - Adding Worker Nodes to the Cluster
+    Part 4 - Configuring Cluster Autoscaler
+    Part 5 - Deploying a Sample Application
+
+- AWS Cli bilgisayara kurulu olmalı;
+
+    curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+    unzip awscliv2.zip
+    sudo ./aws/install
+
+- Kubectl bilgisayara kurulu olmalı.
+
+    curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+    sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+    kubectl version --client
+
+- Aws configure edilecek.
+
+Part 1 - Creating the Kubernetes Cluster on EKS
+
+- Cluster service role tanımlanacak (AmazonEKSClusterPolicy)
+- Her eks için yeni vpc açılmalı, private subnette kurulan instancelara bastionla ulaşılır.
+
+Part 2 - Creating a kubeconfig file
+
+- Aşağıdaki komut ile clusterı .kube dosyasına ekleriz. (local kubectl ile aws cluster bağlantısı sağlarız)
+aws eks --region <us-east-1> update-kubeconfig --name <cluster_name>
+
+``
+PS C:\Users\ahmet> aws eks --region us-east-1 update-kubeconfig --name ahmet-EKS-cluster --profile ahmet
+Added new context arn:aws:eks:us-east-1:555726879390:cluster/ahmet-EKS-cluster to C:\Users\ahmet\.kube\config
+``
+
+- kubectl get svc   -> ile erişimi kontrol ederiz.
+
+Part 3 - Adding Worker Nodes to the Cluster
+
+- EKS üzerinden node group ekleriz.
+    - > Node için IAM Rolü tanımlanacak (AmazonEKSWorkerNodePolicy,AmazonEC2ContainerRegistryReadOnly, AmazonEKS_CNI_Policy, autoscaling-policy`autoscaling yaparken sonradan manuel eklenecek`)
+
+
+- Node kurulumundan sonra aşağıdaki komut ile kontrol edilir.
+
+    kubectl get nodes --watch
+
+Part 4 - Configuring Cluster Autoscaler
+
+- autoscaling-policy oluşturulup Node IAM rolüne atanacak.
+
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Action": [
+                "autoscaling:DescribeAutoScalingGroups",
+                "autoscaling:DescribeAutoScalingInstances",
+                "autoscaling:DescribeLaunchConfigurations",
+                "autoscaling:DescribeTags",
+                "autoscaling:SetDesiredCapacity",
+                "autoscaling:TerminateInstanceInAutoScalingGroup",
+                "ec2:DescribeLaunchTemplateVersions"
+            ],
+            "Resource": "*",
+            "Effect": "Allow"
+        }
+    ]
+}
+
+- Attach ettikten sonra Cluster Autoscaler deploy edilecek;
+
+    kubectl apply -f https://raw.githubusercontent.com/kubernetes/autoscaler/master/cluster-autoscaler/cloudprovider/aws/examples/cluster-autoscaler-autodiscover.yaml
+
+- Add an annotation to the deployment with the following command.
+
+    kubectl -n kube-system annotate deployment.apps/cluster-autoscaler cluster-autoscaler.kubernetes.io/safe-to-evict="false"
+
+- Aşağıdaki komutla autoscalerı editleyeceğiz.(cluster adını ve --skip-nodes-with-system-pods=false container -> spec altına yazacağız.)
+
+    kubectl -n kube-system edit deployment.apps/cluster-autoscaler
+
+-> https://github.com/kubernetes/autoscaler/releases  bu adresten k8s cluster versiyonu bulup autoscalerı tagleyeceğiz;
+
+    kubectl -n kube-system set image deployment.apps/cluster-autoscaler cluster-autoscaler=us.gcr.io/k8s-artifacts-prod/autoscaling/cluster-autoscaler:<YOUR-VERSION-HERE>
+
+
+Part 5 - Deploying a Sample Application
+
+- Bir k8s manifest yazıp localde deploy ediyoruz.
+
+    kubectl apply -f <your-sample-app>.yaml
+
+    kubectl -n my-namespace get svc  -> Bu komut ile bize bir external ip verecek bu ip ve açılan port ile sitemize ulaşabiliriz.
+
+- In case the service remains in pending state then analyze it.
+
+    kubectl describe service container-info-svc -n my-namespace
+
+
+- Describe service object and analyze it.
+
+    kubectl describe service container-info-svc -n my-namespace
+
+- Get the External IP value from the previous command's output and visit that ip.
+
+- For scale up edit deployment. Change "replicas=30" in .yaml file. Save the file.
+
+    kubectl edit deploy container-info-deploy -n my-namespace
+
+- Watch the pods while creating. Show that some pods are pending state.
+
+    kubectl get po -n my-namespace -w
+
+- Describe one of the pending pods. Show that there is no resource to run pods. So cluster-autoscaler scales out and create one more node.
+
+    kubectl describe pod container-info-deploy-xxxxxx -n my-namespace
+    kubectl get nodes
+
+- Atfer clean-up worker nodes and cluster, delete the LoadBalancer manually.
+
+
+Silme sırası : Node - Cluster - ALB
+
+
+
+
+Böyle bir error alırsak:
+
+    Show the warning: "Error creating load balancer (will retry): failed to ensure load balancer for service default/guestbook: could not find any suitable subnets for creating the ELB"
+
+link : https://aws.amazon.com/tr/premiumsupport/knowledge-center/eks-vpc-subnet-discovery/
+
+
+    Go to this link. Explain that it is necessary to tag selected subnets as follows:
+
+    Key: kubernetes.io/cluster/
+    Value: shared
+
+    
+    Go to the VPC service on AWS console and select "subnets". On the Subnets page select "Tags" tab and add this tag:
+
+    Key: kubernetes.io/cluster/
+    Value: shared
+
+
+
