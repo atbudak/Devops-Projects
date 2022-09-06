@@ -1,0 +1,28 @@
+A VPC'de, Private subnette bulunan RDS'e tunnel aracılığıyla bağlantı yapılıyordu. B VPC' ye kurduğumuz OpenVPN ile A VPC'de bulunan RDS'e VPN'e bağlı
+olunduğunda tunnel yapmadan bağlantı yapılmak isteniyor. Yapılması gerekenler;
+
+    1 - RDS'e tunneling yapılan ya da aynı VPC deki bir EC2'dan nslookup ile RDS instance'ın private ipsi alınır.
+    2 - VPC A ile VPC B arasında peering connection yapılır.
+    3 - OpenVPN'in kurulu olduğu VPC B'nin ip adresi RDS security groupa tanımlanılır.
+    4 - Daha sonra OpenVPN'in kurulu olduğu EC2'da openvpn server push route update yapılır.
+        (https://blog.programster.org/openvpn-server-config-cheatsheet)
+        Server confige eklenecek ->  push "route X.X.X.X(ip-adresi) X.X.X.X(subnet-mask)"(push "route 10.6.0.0 255.255.0.0")
+        Sonra değişikliği aktif etmek için vpn servisi restart edilir.
+
+Direkt RDS IP ye bağlanılacaksa;
+    1 - SG update
+    2- openvpn server push route update
+yapılmalıdır.
+
+Bağlanmada sorun çıkıyorsa troubleshoot için;
+
+    - VPN de o IP blogu  / VPC için route var mı? client tarafında bunu push etmişmiyiz.
+    - VPC peerring var mı?
+    - RDS security group da VPN iç IP izinli mi?
+
+    -> Localde kullandığımız VPN'e bağlanıp VPN route ip var mı bakılır.   örn: netstat -nr 172.31.5.34 (RDS private ip) 
+    -> VPN servera bağlanıp RDS private ip'sine telnet atılır.     
+        örn: telnet 172.31.5.34 3306  -> connection refused alırsa RDS Security Group'a ip bakılacak. (VPN ip eklenir 10.6.0.0/16)
+    -> Eğer telnet atınca connect oluyorsa OpenVPN server push update yapılmalı. (VPC B 'nin ip adresi push route olarak yazılacak.)
+    
+
