@@ -34,3 +34,8 @@ komutuyla tekrar bağlanmak gerekiyor.
 # connect aws eks on cli
 
 aws eks --region region update-kubeconfig --name cluster_name
+
+
+# get database secret
+
+kubectl get secret -o yaml -n stage database
