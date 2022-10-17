@@ -1,0 +1,112 @@
+unpub kurulumu için gereksinimler indirilir;
+    - flutter : https://docs.flutter.dev/get-started/install/linux
+    - mongodb : https://www.mongodb.com/docs/manual/tutorial/install-mongodb-on-ubuntu/
+
+flutter kurulduktan sonra unpub package managerı akrif edyoruz. (https://pub.dev/packages/unpub)
+
+    - pub global activate unpub
+    - unpub --database mongodb://localhost:27017/dart_pub
+
+NOT: Nullable string Objeye atanamaz hatası gelirse 2 dosyadaki stringlerdeki ? kaldırılır.
+
+Localhost(127.0.0.1) 4000 portunda çalışmaya başlar. (Cihaz ip : 192.168.85.163 yayın adresi : http://192.168.85.163:4000)  
+
+http de yayın yapan unpub'ı https e yönlendirmek için nginx üzerinden reverse proxy yapacağız.
+
+Geresinimler; 
+    - nginx ve certbox sunucuda yüklü olması gerekir.
+    - domain overtech.com.tr alınmış olunması  gerekir.
+    - subdomain unpub dns providerda tanımlanması gerekir.(unpub.overtech.com.tr)
+
+    certbot proxy için kaynaklar;
+        - https://www.youtube.com/watch?v=DyXl4c2XN-o&ab_channel=TheDigitalLife
+        - https://www.youtube.com/watch?v=R5d-hN9UtpU&list=LL&index=1&ab_channel=AntonPutra
+        - https://github.com/xcad2k/videos/tree/main/nginx-reverseproxy
+
+İlk olarak nginx ve certbot sunucuya indiriyoruz. Nginx indirdikten sonra /etc/nginx/sites-enabled/default dosyasını silerek yeni proxy ayarımızı yazıyoruz.
+
+
+    server {
+
+        server_name unpub.overtech.com.tr;
+
+        location / {
+                proxy_pass http://127.0.0.1:4000;
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto https;       # gelen post isteğini http'den https e yönlendirmek için
+        }
+    }
+
+Yönlendirmeyi yaptıktan sonra sudo systemctl reload nginx ile nginx'i yeniliyoruz ve 80 portunda unpub'ı görüntülüyoruz.
+
+Reverse Proxy yaptıktan sonra sunucumuzun iç ipsini dış ip ye yönlendirmemiz gerekiyor. PFSense kullandığımız için;
+
+    PFSense > Firewall > NAT > Port Forward üzerinden flutter-unpuba-reverse-proxy-ile-httpse-yönlendirme-1.jpg deki gibi destination kısmına dış port,
+    Redirect target ip kısmına iç port adresini tanımlıyoruz. 
+
+Daha sonra domainin alınmış olduğu yerden (bizdeki domain ihs'de olduğundan) İHS -> Hosting kontrol paneli -> DNS işlemlerinden yeni DNS kaydı yapıyoruz.
+
+    - Kayıt tipi A Name, Port olarak dış İP (212.154.117.121) kullanmamız gerekiyor.
+
+İHS kaydını da yaptıktan sonra Active Directory'de DNS Manager'den overtech.com.tr domainine subdomain tanımı yapıyoruz.
+    
+    - DNS -> Forward Lookup Zones -> Domain Name (overtech.com.tr) -> Add New Host (A Name) : Name=unpub , ip=192.168.85.163(iç ip adresi)
+
+
+DNS ve Proxy ayarları yapıldıktan sonra programın sürekli açık kalması için nohup programı ile sürekli programı çalıştırıyoruz.
+
+    (nohup : https://mertcangokgoz.com/linux-de-nohup-kullanimi/)
+    
+    unpub-exec.sh 
+    ``
+        #! /bin/bash
+
+        unpub --database mongodb://localhost:27017/dart_pub &
+    ``
+
+    nohup sh unpub-exec.sh
+
+
+Şimdi Certbot ile letsencrypt alıyoruz.
+
+certbot --nginx --test-cert ile sorunsuzca çalıştığını test ediyoruz. Sorun yoksa;
+
+certbot --nginx ile certifika alıyoruz.
+
+
+
+
+### Flutter unpub_auth kurulumu ve servera migrate edilmesi:
+
+DNS ayarı yapıldıktan sonra unpub package manager server'imıza unpub_ kuruyoruz.
+
+    - Linux serverde unpub_auth aktif edilir : dart pub global activate unpub_auth
+    - unpub_auth çalıştırılarak adımlar takip edilir.
+
+        """
+            1. Login locally, and publish pub packages locally.
+                step 1. Call `unpub_auth login` when you first use it, and it will save credentials locally.
+                step 2. Before calling `dart pub publish` or `flutter pub publish`, call `unpub_auth get | dart pub token add <self-hosted-pub-server>`
+
+            2. Login locally, and publish pub packages from CI/CD.
+                On CI/CD host device, you may not have opportunity to call `unpub_auth login`, so you can use `unpub_auth migrate` to migrate the credentials file.
+                step 1. In local device, call `unpub_auth login` when you first use it, and it will save credentials locally.
+                step 2. Copy the credentials file which was generated in step 1 to CI/CD device.
+                step 3. In CI/CD device, call `unpub_auth migrate <credentials-file-path>`, so the CI/CD will have the same credentials file.
+                step 4. In CI/CD device, before calling `dart pub publish` or `flutter pub publish`, call `unpub_auth get | dart pub token add <self-hosted-pub-server>`
+
+                Usage: unpub_auth <command> [arguments]
+
+                Available commands:
+                get             Refresh and get a new accessToken. Must login first.
+                login           Login unpub_auth on Google APIs.
+                logout          Delete local credentials file.
+                migrate <path>  Migrate existed credentials file from path.
+        """
+    
+        NOT: Eğer linux serverde auth yapılmaya çalışılıyorsa; internete yönlendirileceği için arayüzü olan bir bilgisyarda yapılmalı daha sonra unpub-credentials.json 
+        sunucuya eklenip migrate edilmelidir.
+    
+    - Sonrasında token hosta eklenir :  unpub_auth get | dart pub token add https://unpub.overtech.com.tr
