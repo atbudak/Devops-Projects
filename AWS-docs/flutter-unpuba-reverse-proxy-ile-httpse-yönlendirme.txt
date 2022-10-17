@@ -1,6 +1,8 @@
 unpub kurulumu için gereksinimler indirilir;
     - flutter : https://docs.flutter.dev/get-started/install/linux
-    - mongodb : https://www.mongodb.com/docs/manual/tutorial/install-mongodb-on-ubuntu/
+    - mongodb : https://www.mongodb.com/docs/manual/tutorial/install-mongodb-on-ubuntu/     
+        
+        NOT: Mongo 6.0 bazı komutları desteklemediğinden 5.0.13 versiyon kullanılabilir.
 
 flutter kurulduktan sonra unpub package managerı akrif edyoruz. (https://pub.dev/packages/unpub)
 
