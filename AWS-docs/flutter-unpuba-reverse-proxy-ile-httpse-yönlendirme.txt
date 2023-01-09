@@ -75,9 +75,10 @@ DNS ve Proxy ayarları yapıldıktan sonra programın sürekli açık kalması i
 
 certbot --nginx --test-cert ile sorunsuzca çalıştığını test ediyoruz. Sorun yoksa;
 
-certbot --nginx ile certifika alıyoruz.
+certbot --nginx ile sertifika alıyoruz.
 
-
+NOTE: certbot sertifikasını yenilemek istersek 443 ve 80 portunun açık olması gerekiyor.
+(https://www.cyberciti.biz/faq/how-to-forcefully-renew-lets-encrypt-certificate/)
 
 
 ### Flutter unpub_auth kurulumu ve servera migrate edilmesi:
