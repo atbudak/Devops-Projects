@@ -56,6 +56,10 @@ Daha sonra domainin alınmış olduğu yerden (bizdeki domain ihs'de olduğundan
     
     - DNS -> Forward Lookup Zones -> Domain Name (overtech.com.tr) -> Add New Host (A Name) : Name=unpub , ip=192.168.85.163(iç ip adresi)
 
+            Make sure you have port 443 open in your firewall:
+
+            sudo ufw allow https
+
 
 DNS ve Proxy ayarları yapıldıktan sonra programın sürekli açık kalması için nohup programı ile sürekli programı çalıştırıyoruz.
 
