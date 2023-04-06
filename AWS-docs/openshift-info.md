@@ -6,6 +6,7 @@
 # - save-start-flags: true bu değeri false yapılırsa kubernetes ayarları .kube/config'den silinmiyor, hata alıyor
 # ~/.minishift dosyası server ayarlarını tutuyor. Sürekli hata alması durumunda silinebilir.
 ##  https://stackoverflow.com/questions/57436612/error-when-executing-minishift-start-connect-connection-refused
+# cluster stop edildiğinde tekrar açılırken vpn ile açılırsa hata alıyor 
 
 ./minishift.exe start --cpus 4 --memory 6144 --vm-driver=virtualbox 
 
