@@ -40,7 +40,7 @@ DeploymentConfig -> add under spec>template>spec
       serviceAccount: ahmet-sa
       serviceAccountName: ahmet-sa
 
-oc set serviceaccout deployment reactapp ahmet-sa
+oc set serviceaccount deployment reactapp ahmet-sa
 
 # login oc registry
 docker login -u developer -p $(oc whoami -t) 172.30.1.1:5000
@@ -50,3 +50,38 @@ docker login -u developer -p $(oc whoami -t) 172.30.1.1:5000
 # oc serverın timezone değiştirme
 
 ./minishift.exe ssh -- "sudo timedatectl set-timezone Europe/Istanbul"
+
+# default serviceaccounta atama yapma sadece izleme olsun 
+oc policy add-role-to-user view -z default
+
+
+
+# OPENSHIFT CLUSTER INFO
+
+### to connect cli via powershell
+$env:KUBECONFIG="C:\Users\ahmet\OneDrive\Documents\Openshift-cli\openshift-client-windows\kubeconfig-noingress-openshift"
+
+.\oc.exe get pods
+
+### print all env
+Get-ChildItem Env:
+
+## serviceaccount policys
+https://cloud.redhat.com/blog/managing-sccs-in-openshift
+
+
+## Create user on Openshift using htpasswd
+[https://www.youtube.com/watch?v=hbCQihvBaYU](yt source)
+### creates file
+htpasswd -c -B -b ./openshift.htpasswd user1 1234
+
+### appends file
+htpasswd -B -b ./openshift.htpasswd user2 1234
+
+# giving user access to project
+.\oc.exe adm policy add-role-to-user edit developer -n pavopay-dev
+
+## env var for dotnet core application
+ASPNETCORE_URLS=http://*:8080
+
+# expose 8080
