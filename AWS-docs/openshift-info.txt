@@ -85,3 +85,15 @@ htpasswd -B -b ./openshift.htpasswd user2 1234
 ASPNETCORE_URLS=http://*:8080
 
 # expose 8080
+
+
+# oc serverın timezone değiştirme
+## admin user ile giriş yapıyoruz ve Administrator > Compute > Nodes > Terminal'e giriyoruz.
+## local zonu silip yeni tz ayarlıyoruz
+[https://linuxize.com/post/how-to-set-or-change-timezone-in-linux/](site link)
+
+```
+sudo rm -rf /etc/localtime
+sudo ln -s /usr/share/zoneinfo/Europe/Istanbul /etc/localtime
+date
+```
