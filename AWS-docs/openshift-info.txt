@@ -97,3 +97,12 @@ sudo rm -rf /etc/localtime
 sudo ln -s /usr/share/zoneinfo/Europe/Istanbul /etc/localtime
 date
 ```
+
+### If you do not want the Cluster Version Operator to fetch available updates from the update recommendation service :
+
+```
+ .\oc.exe adm upgrade channel --allow-explicit-channel
+```
+
+ warning: Clearing channel "stable-4.12"; cluster will no longer request available update recommendations.
+ [https://access.redhat.com/documentation/en-us/openshift_container_platform/4.12/html/updating_clusters/understanding-upgrade-channels-releases#understanding-upgrade-channels_understanding-upgrade-channels-releases](site link)
