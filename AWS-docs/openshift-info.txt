@@ -122,3 +122,17 @@ metadata:
 
 
  [https://docs.openshift.com/container-platform/4.11/networking/routes/route-configuration.html#nw-route-specific-annotations_route-configuration](resouce link)
+
+
+### Slack Notification'u AlertManager'e integre etme
+
+Slack app panelinden bir uygulama oluşturuyoruz, daha sonra uygulamaya girip webhook adresi oluşturuyoruz. https://api.slack.com/apps
+
+AlertManager configiration detayından receivers ekliyoruz. 
+
+  Slack API URL : https://hooks.slack.com/services/xxx/xxx (webhook adresi)
+  Channel : General (slack app panaelinde kanala göre webhook çıkarıyoruz. Çıkardığımız channel' i buraya yazıyoruz)
+  Routing labels: severity=Critical, alertname=Watchdog, all=all (default)
+
+
+ [https://docs.openshift.com/container-platform/4.11/monitoring/managing-alerts.html](resouce link)
