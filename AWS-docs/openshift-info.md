@@ -1,67 +1,32 @@
-# https://github.com/minishift/minishift/releases adresten son versiyonu indiriyoruz. İndirilen yerden exe dosyası ile çalıştırıyoruz.
-
-#### INFORMATION
-# Minishift başlatabilmek için biostan virtualization ayarı açılmalı, Feature On/Off 'tan Hyper-V disable edilmeli(Virtualbox kullanılacaksa) ve Virtual Machine Platform disable edilmeli
-#
-# - save-start-flags: true bu değeri false yapılırsa kubernetes ayarları .kube/config'den silinmiyor, hata alıyor
-# ~/.minishift dosyası server ayarlarını tutuyor. Sürekli hata alması durumunda silinebilir.
-##  https://stackoverflow.com/questions/57436612/error-when-executing-minishift-start-connect-connection-refused
-# cluster stop edildiğinde tekrar açılırken vpn ile açılırsa hata alıyor 
-
-./minishift.exe start --cpus 4 --memory 6144 --vm-driver=virtualbox 
-
-# server oluşturulduktan sonra openshift(oc) komut satırı kullanabilmek için env var eklenmeli
-
-./minishift.exe oc-env  # bu komut oc için env var değeri verir
-
-./minishift.exe docker-env  # Virtual Machine Platform disable edildiği için docker komutları kullanmıyoruz. Bu komutla env var değerleri alır ve komutları çalıştırabiliriz.
-
-# Login as developer:
-oc login -u developer
-
-# Login as admin: 
-oc login -u system:admin
-
-# Get token:
-oc whoami -t
-
-# API call:
-curl -k https://192.168.99.100:8443/oapi/v1/projects -H "Authorization: Bearer <token>"
-
-# Herhangi bir usera admin yekisi verme system:admin kullanıcısıyla
-oc adm policy add-cluster-role-to-user cluster-admin developer(user)
-
-# run-docker-image-as-root :
-create service account:  oc create sa ahmet-sa
-oc adm policy add-scc-to-user anyuid -z ahmet-sa(serviceaccount) developer(user)
-
-DeploymentConfig -> add under spec>template>spec
-
-      serviceAccount: ahmet-sa
-      serviceAccountName: ahmet-sa
-
-oc set serviceaccount deployment reactapp ahmet-sa
-
-# login oc registry
-docker login -u developer -p $(oc whoami -t) 172.30.1.1:5000
-
-    -> openshift-pull-image.sh (pull image from local repo and push oc registry)
-
-# oc serverın timezone değiştirme
-
-./minishift.exe ssh -- "sudo timedatectl set-timezone Europe/Istanbul"
-
-# default serviceaccounta atama yapma sadece izleme olsun 
-oc policy add-role-to-user view -z default
-
-
-
 # OPENSHIFT CLUSTER INFO
+
+### Mac, Linux ya da Windows sunucuda oc cli kullanımı
+
+openshift console da sağ üstteki soru işaritinden os.tar dosyası indirilir. tar ile açılıp $PATH dosyasına eklenir.
+
+(linux için) 
+```
+tar -xvf oc.tar
+sudo mv oc /usr/local/bin
+```
+
+Daha sonra user bölümünden copy-login command ile token alınıp clustera login olunur.
+```
+oc login --token=<token>--server=https://api.lotoc01.overtech.com.tr:6443
+```
 
 ### to connect cli via powershell
 $env:KUBECONFIG="C:\Users\ahmet\OneDrive\Documents\Openshift-cli\openshift-client-windows\kubeconfig-noingress-openshift"
 
-.\oc.exe get pods
+### adding openshift(oc.exe) executable file to PATH
+```
+ mkdir C:\bin
+ # move oc.exe to `C:\bin`
+ setx PATH "C:\bin;%PATH%"
+```
+then restart the terminal. [https://zwbetz.com/how-to-add-a-binary-to-your-path-on-macos-linux-windows/](site link)
+
+oc get pods
 
 ### print all env
 Get-ChildItem Env:
@@ -79,7 +44,7 @@ htpasswd -c -B -b ./openshift.htpasswd user1 1234
 htpasswd -B -b ./openshift.htpasswd user2 1234
 
 # giving user access to project
-.\oc.exe adm policy add-role-to-user edit developer -n pavopay-dev
+oc adm policy add-role-to-user edit developer -n pavopay-dev
 [https://docs.openshift.com/container-platform/4.12/authentication/using-rbac.html#adding-roles_using-rbac](roles documentation)
 
 # Delete the User object:
@@ -108,7 +73,7 @@ date
 ### If you do not want the Cluster Version Operator to fetch available updates from the update recommendation service :
 
 ```
- .\oc.exe adm upgrade channel --allow-explicit-channel
+ oc adm upgrade channel --allow-explicit-channel
 ```
 
  warning: Clearing channel "stable-4.12"; cluster will no longer request available update recommendations.
@@ -116,7 +81,7 @@ date
 
 ### change  default namespace
 ```
- .\oc.exe config set-context --current --namespace="pavopay-dev"
+ oc config set-context --current --namespace="pavopay-dev"
  ```
 
  ### adding route annotations for load balancing
@@ -143,3 +108,64 @@ AlertManager configiration detayından receivers ekliyoruz.
 
 
  [https://docs.openshift.com/container-platform/4.11/monitoring/managing-alerts.html](resouce link)
+
+ ### Get Wildcard Certificate 
+
+DNS recorda (IHS) TXT kaydı olarak _acme-challenge.apps.lotoc01.overtech.com.tr = given value from letsencrypt
+
+```
+ sudo certbot run --cert-name apps.lotoc01.overtech.com.tr -a manual -d *apps.lotoc01.overtech.com.tr -i nginx 
+ ```
+ 
+ [https://community.letsencrypt.org/t/how-to-expand-certificate-with-a-wildcard-subdomain/133925](resouce link)
+
+
+# Creating NFS Povisioner for Automate PV Creation
+
+### Creating new project for provisioner and install 'NFS Provisioner Operator' from OperatorHub
+
+```
+oc new-project nfsprovisioner-operator
+```
+
+### Getting target node
+```
+export target_node=$(oc get node --no-headers -o name|cut -d'/' -f2)
+```
+
+### Adding label for our node which will used for provision
+
+```
+oc label node <target_node>lotoc01 app=nfs-provisioner
+```
+
+### Logging in node, creating nfs file path, and 
+```
+oc debug node/lotoc01 
+chroot /host
+mkdir -p /home/core/nfs
+chcon -Rvt svirt_sandbox_file_t /home/core/nfs
+```
+### Create and apply nfsprovisioner.yaml
+
+```
+apiVersion: cache.jhouse.com/v1alpha1
+kind: NFSProvisioner
+metadata:
+  name: nfsprovisioner-sample
+  namespace: nfsprovisioner-operator
+spec:
+  nfsImageConfiguration:
+    image: k8s.gcr.io/sig-storage/nfs-provisioner:v3.0.1
+    imagePullPolicy: IfNotPresent
+  scForNFS: nfs
+  hostPathDir: "/home/core/nfs"
+```
+oc apply -f .\NFSprovisioner.yml
+
+Patch storageclass :
+
+```
+oc patch storageclass nfs -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}' -n nfsprovisioner-operator
+```
+(It could throws error on powershell)
