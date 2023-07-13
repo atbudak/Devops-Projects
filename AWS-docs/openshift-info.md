@@ -169,3 +169,40 @@ Patch storageclass :
 oc patch storageclass nfs -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}' -n nfsprovisioner-operator
 ```
 (It could throws error on powershell)
+
+
+### Checking Access of user on K8s
+
+```
+kubectl auth can-i create deployments --as bob --namespace developer
+```
+
+
+## Secure Connect To Portals, TLS Configurations
+
+Getting Cert and Key file with Letsencrypt:
+
+```bash
+ sudo certbot run --cert-name apps.lotoc01.overtech.com.tr -a manual -d *apps.lotoc01.overtech.com.tr -i nginx 
+```
+
+After getting key and cert file, We will follow this steps: 
+
+```bash
+  oc create configmap custom-ca --from-file=ca-bundle.crt=</path/to/example-ca.crt> -n openshift-config
+```
+
+```bash
+  oc patch proxy/cluster --type=merge --patch='{"spec":{"trustedCA":{"name":"custom-ca"}}}'
+```
+
+
+```bash
+  oc create secret tls <secret> --cert=</path/to/cert.crt> --key=</path/to/cert.key> -n openshift-ingress
+```
+
+```bash
+oc patch ingresscontroller.operator default --type=merge -p '{"spec":{"defaultCertificate": {"name": "<secret>"}}}' -n openshift-ingress-operator
+```
+
+ - [Resource Link.](https://docs.openshift.com/container-platform/4.12/security/certificates/replacing-default-ingress-certificate.html#replacing-default-ingress_replacing-default-ingress) 
