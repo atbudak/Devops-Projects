@@ -1,0 +1,57 @@
+version: '3.3'
+
+services:
+  uptimekuma.traefik:
+    image: traefik:v2.7
+    container_name: uptimekuma.traefik
+    restart: always
+    command:  # test ortamı için debug açılıp --api.insecure=false yapılabilir
+      # - "--log.level=DEBUG"   
+      # - --port=8082  # traefik listens spesific port
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=true"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
+      - "--certificatesresolvers.myresolver.acme.httpchallenge=true"
+      - "--certificatesresolvers.myresolver.acme.httpchallenge.entrypoint=web"
+      - "--certificatesresolvers.myresolver.acme.email=ahmet.budak@overtech.com.tr"
+      - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
+    ports:  # --api.insecure=true olursa 8080:8080 portu açılarak traefik dashboardı aktif edilir.
+      - 80:80
+      - 443:443
+      - 8080:8080
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./letsencrypt:/letsencrypt
+    networks:
+      - uptime_kuma_nw
+
+  uptime-kuma:
+    image: louislam/uptime-kuma:1
+    container_name: uptime-kuma
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.uptime-kuma.tls.certresolver=myresolver"
+      - "traefik.http.routers.uptime-kuma.rule=Host(`uptime.overtech.com.tr`)"
+      - "traefik.http.services.uptime-kuma.loadBalancer.server.port=3001"
+      - "traefik.http.routers.uptime-kuma.tls=true"
+      - "traefik.http.routers.uptime-kuma.entrypoints=web,websecure"
+    environment:
+      - NODE_ENV=development
+      - SQL_LOG=1
+    volumes:
+      - ./uptime-kuma:/app/data
+    ports:
+      - 3001:3001
+    networks:
+      - uptime_kuma_nw
+
+networks:
+  uptime_kuma_nw:
+
+volumes:
+  letsencrypt:
+    driver: local
