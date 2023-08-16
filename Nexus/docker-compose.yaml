@@ -1,0 +1,51 @@
+# docker run -d -p 8081:8081 --name nexus -v /opt/nexus:/nexus-data sonatype/nexus3:3.59.0
+
+version: "3.3"
+services:
+
+  nexus.traefik:
+    image: traefik:v2.7
+    container_name: nexus.traefik
+    restart: always
+    command:  # test ortamı için debug açılıp --api.insecure=false yapılabilir
+      # - "--log.level=DEBUG"   
+      # - --port=8082  # traefik listens spesific port
+      # - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=true"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
+      - "--certificatesresolvers.myresolver.acme.httpchallenge=true"
+      - "--certificatesresolvers.myresolver.acme.httpchallenge.entrypoint=web"
+      - "--certificatesresolvers.myresolver.acme.email=ahmet.budak@overtech.com.tr"
+      - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
+    ports:  # --api.insecure=true olursa 8080:8080 portu açılarak traefik dashboardı aktif edilir.
+      - 80:80
+      - 443:443
+      - 8080:8080
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./letsencrypt:/letsencrypt
+    networks:
+      - nexus_nw
+
+  nexus:
+    image: sonatype/nexus3:3.59.0
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.nexus.tls.certresolver=myresolver"
+      - "traefik.http.routers.nexus.rule=Host(`nexus.overtech.com.tr`)"
+      - "traefik.http.services.nexus.loadBalancer.server.port=8081"
+      - "traefik.http.routers.nexus.tls=true"
+      - "traefik.http.routers.nexus.entrypoints=web,websecure"
+    volumes:
+      - "./nexus-data:/nexus-data"
+    ports:
+      - "8081:8081"
+    networks:
+      - nexus_nw
+  
+networks:
+  nexus_nw:
