@@ -11,7 +11,7 @@ sayfa::aws-vault-ile-session-oluşturma.links
 
 aws-vault add didiyo
 
-- access keyleri gireceğiz
+- access keyleri gireceğiz (mfa_serial=arn:aws:iam::495114409155:mfa/abudak mfa alındığında verilen Device Name olacak)
 
 # vi ~/aws/config dosyasında
 
