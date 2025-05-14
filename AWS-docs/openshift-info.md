@@ -24,7 +24,7 @@ $env:KUBECONFIG="C:\Users\ahmet\OneDrive\Documents\Openshift-cli\openshift-clien
  # move oc.exe to `C:\bin`
  setx PATH "C:\bin;%PATH%"
 ```
-then restart the terminal. [https://zwbetz.com/how-to-add-a-binary-to-your-path-on-macos-linux-windows/](site link)
+then restart the terminal. (site link)(https://zwbetz.com/how-to-add-a-binary-to-your-path-on-macos-linux-windows/)
 
 oc get pods
 
