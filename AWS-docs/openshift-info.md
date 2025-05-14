@@ -24,7 +24,7 @@ $env:KUBECONFIG="C:\Users\ahmet\OneDrive\Documents\Openshift-cli\openshift-clien
  # move oc.exe to `C:\bin`
  setx PATH "C:\bin;%PATH%"
 ```
-then restart the terminal. (site link)(https://zwbetz.com/how-to-add-a-binary-to-your-path-on-macos-linux-windows/)
+then restart the terminal. [oc install link](https://zwbetz.com/how-to-add-a-binary-to-your-path-on-macos-linux-windows/)
 
 oc get pods
 
@@ -36,7 +36,7 @@ https://cloud.redhat.com/blog/managing-sccs-in-openshift
 
 
 ## Create user on Openshift using htpasswd
-[https://www.youtube.com/watch?v=hbCQihvBaYU](yt source)
+[yt source](https://www.youtube.com/watch?v=hbCQihvBaYU)
 ### creates file
 htpasswd -c -B -b ./openshift.htpasswd user1 1234
 
@@ -45,7 +45,7 @@ htpasswd -B -b ./openshift.htpasswd user2 1234
 
 # giving user access to project
 oc adm policy add-role-to-user edit developer -n pavopay-dev
-[https://docs.openshift.com/container-platform/4.12/authentication/using-rbac.html#adding-roles_using-rbac](roles documentation)
+[roles documentation](https://docs.openshift.com/container-platform/4.12/authentication/using-rbac.html#adding-roles_using-rbac)
 
 # Delete the User object:
 oc delete user <username>
@@ -62,7 +62,7 @@ ASPNETCORE_URLS=http://*:8080
 # oc serverın timezone değiştirme
 ## admin user ile giriş yapıyoruz ve Administrator > Compute > Nodes > Terminal'e giriyoruz.
 ## local zonu silip yeni tz ayarlıyoruz
-[https://linuxize.com/post/how-to-set-or-change-timezone-in-linux/](site link)
+[timezone ayarlama linki](https://linuxize.com/post/how-to-set-or-change-timezone-in-linux/)
 
 ```
 sudo rm -rf /etc/localtime
@@ -77,7 +77,7 @@ date
 ```
 
  warning: Clearing channel "stable-4.12"; cluster will no longer request available update recommendations.
- [https://access.redhat.com/documentation/en-us/openshift_container_platform/4.12/html/updating_clusters/understanding-upgrade-channels-releases#understanding-upgrade-channels_understanding-upgrade-channels-releases](site link)
+ [release page link](https://access.redhat.com/documentation/en-us/openshift_container_platform/4.12/html/updating_clusters/understanding-upgrade-channels-releases#understanding-upgrade-channels_understanding-upgrade-channels-releases)
 
 ### change  default namespace
 ```
@@ -93,10 +93,10 @@ metadata:
 ```
 
 
- [https://docs.openshift.com/container-platform/4.11/networking/routes/route-configuration.html#nw-route-specific-annotations_route-configuration](resouce link)
+ [resouce link](https://docs.openshift.com/container-platform/4.11/networking/routes/route-configuration.html#nw-route-specific-annotations_route-configuration)
 
 
-### Slack Notification'u AlertManager'e integre etme
+### Slack Notification'u AlertManager'e entegre etme
 
 Slack app panelinden bir uygulama oluşturuyoruz, daha sonra uygulamaya girip webhook adresi oluşturuyoruz. https://api.slack.com/apps
 
@@ -107,7 +107,7 @@ AlertManager configiration detayından receivers ekliyoruz.
   Routing labels: severity=Critical, alertname=Watchdog, all=all (default)
 
 
- [https://docs.openshift.com/container-platform/4.11/monitoring/managing-alerts.html](resouce link)
+ [monitoring resouce link](https://docs.openshift.com/container-platform/4.11/monitoring/managing-alerts.html)
 
  ### Get Wildcard Certificate 
 
@@ -117,7 +117,7 @@ DNS recorda (IHS) TXT kaydı olarak _acme-challenge.apps.lotoc01.overtech.com.tr
  sudo certbot run --cert-name apps.lotoc01.overtech.com.tr -a manual -d *apps.lotoc01.overtech.com.tr -i nginx 
  ```
  
- [https://community.letsencrypt.org/t/how-to-expand-certificate-with-a-wildcard-subdomain/133925](resouce link)
+ [expand certificate resouce link](https://community.letsencrypt.org/t/how-to-expand-certificate-with-a-wildcard-subdomain/133925)
 
 
 # Creating NFS Povisioner for Automate PV Creation
